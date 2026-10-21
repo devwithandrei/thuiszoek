@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  SEEKER
+  PROVIDER
+  ADMIN
+}
+
+enum Plan {
+  BASIC
+  PRO
+  EXPERT_PRO_MAX
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+  EXPIRED
+  RENTED
+  SOLD
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  STUDIO
+  ROOM
+  COMMERCIAL
+  OFFICE
+  RETAIL
+}
+
+enum OfferType {
+  RENT
+  BUY
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}
+
+model User {
+  id          String      @id @default(cuid())
+  clerkId     String      @unique
+  email       String      @unique
+  name        String
+  role        Role        @default(SEEKER)
+  agency      Agency?
+  enquiries   Enquiry[]
+  reports     Report[]    @relation("Reporter")
+  reviewed    Report[]    @relation("Reviewer")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Agency {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String    @unique
+  description String    @db.Text
+  website     String?
+  phone       String?
+  city        String
+  logoUrl     String?
+  verified    Boolean   @default(false)
+  plan        Plan      @default(BASIC)
+  listings    Listing[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Listing {
+  id             String        @id @default(cuid())
+  agencyId       String
+  agency         Agency        @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  slug           String        @unique
+  title          String
+  description    String        @db.Text
+  propertyType   PropertyType
+  offerType      OfferType
+  status         ListingStatus @default(DRAFT)
+  price          Int
+  city           String
+  postalCode     String
+  address        String?
+  bedrooms       Int           @default(0)
+  bathrooms      Int           @default(0)
+  areaSqm        Int
+  energyLabel    String?
+  images         String[]
+  availableFrom  DateTime?
+  expiresAt      DateTime
+  featured       Boolean       @default(false)
+  enquiries      Enquiry[]
+  reports        Report[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status, offerType, city])
+  @@index([expiresAt])
+  @@index([agencyId, status])
+}
+
+model Enquiry {
+  id        String   @id @default(cuid())
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  seekerId  String?
+  seeker    User?    @relation(fields: [seekerId], references: [id], onDelete: SetNull)
+  name      String
+  email     String
+  phone     String?
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([listingId, createdAt])
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  listingId   String
+  listing     Listing      @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reporterId  String?
+  reporter    User?        @relation("Reporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  reviewerId  String?
+  reviewer    User?        @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  reason      String
+  details     String?      @db.Text
+  status      ReportStatus @default(OPEN)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+}
+
+model RateLimitBucket {
+  key             String   @id
+  hits            Int      @default(0)
+  windowStartedAt DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([updatedAt])
+}
