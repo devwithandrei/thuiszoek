@@ -42,7 +42,7 @@ Clerk sign-in and sign-up pages are available at `/sign-in` and `/sign-up`. To o
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript checks |
 | `npm test` | Focused validation tests |
-| `npm run build` | Production build |
+| `npm run build` | Generate Prisma Client and run the production build |
 | `npm run db:generate` | Generate Prisma client |
 | `npm run db:migrate` | Create/apply a development migration |
 | `npm run db:deploy` | Apply checked-in migrations |
