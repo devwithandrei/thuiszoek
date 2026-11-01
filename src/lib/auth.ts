@@ -2,22 +2,44 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Prisma } from "@prisma/client";
 import { Role } from "@prisma/client";
 import { db } from "@/lib/db";
-import { isConfiguredAdminEmail } from "@/lib/admin-bootstrap";
+import { getConfiguredAdminEmails, isConfiguredAdminEmail } from "@/lib/admin-bootstrap";
 
 export async function currentUser() {
   const { userId } = await auth();
   if (!userId) return null;
   const user = await db.user.findUnique({ where: { clerkId: userId }, include: { agency: true } });
-  if (user?.role === Role.ADMIN) return user;
 
-  const configuredEmail = process.env.SEED_ADMIN_EMAIL?.trim();
-  if (!configuredEmail || (user && user.email.toLowerCase() !== configuredEmail.toLowerCase())) return user;
+  const configuredEmails = getConfiguredAdminEmails();
+  const isAdminRecord = user?.role === Role.ADMIN;
+  if (!isAdminRecord && user && !configuredEmails.has(user.email.trim().toLowerCase())) return user;
+  if (!isAdminRecord && !user && configuredEmails.size === 0) return null;
 
   const clerk = await clerkClient();
   const identity = await clerk.users.getUser(userId);
   const primaryEmail = identity.emailAddresses.find((email) => email.id === identity.primaryEmailAddressId);
   const verifiedEmail = primaryEmail?.emailAddress;
-  if (!verifiedEmail || !isConfiguredAdminEmail(verifiedEmail, primaryEmail?.verification?.status, configuredEmail)) return user;
+  const isConfiguredAdmin = isConfiguredAdminEmail(verifiedEmail, primaryEmail?.verification?.status);
+  if (!verifiedEmail || !isConfiguredAdmin) {
+    if (!isAdminRecord || !user) return user;
+
+    const safeRole = user.agency ? Role.PROVIDER : Role.SEEKER;
+    return db.$transaction(async (tx) => {
+      const demotedUser = await tx.user.update({
+        where: { id: user.id },
+        data: { role: safeRole },
+        include: { agency: true },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorId: user.id,
+          action: "admin_access_revoked_not_allowlisted",
+          entityType: "user",
+          entityId: user.id,
+        },
+      });
+      return demotedUser;
+    });
+  }
 
   const email = verifiedEmail.trim().toLowerCase();
   const name = [identity.firstName, identity.lastName].filter(Boolean).join(" ") || "ThuisZoek beheerder";

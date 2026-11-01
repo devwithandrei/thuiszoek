@@ -4,7 +4,14 @@ const db = new PrismaClient();
 
 async function main() {
   const adminClerkId = process.env.SEED_ADMIN_CLERK_ID;
-  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+  const configuredAdminEmails = (process.env.SEED_ADMIN_EMAIL ?? "")
+    .split(/[,\n]/)
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  if (adminClerkId && configuredAdminEmails.length !== 1) {
+    throw new Error("SEED_ADMIN_CLERK_ID can only be used when SEED_ADMIN_EMAIL contains exactly one address. Without a Clerk ID, each allowlisted admin can be promoted after verified sign-in.");
+  }
+  const adminEmail = configuredAdminEmails[0];
   if (adminClerkId && adminEmail) {
     const adminName = process.env.SEED_ADMIN_NAME || "ThuisZoek beheerder";
     const [userByClerkId, userByEmail] = await Promise.all([

@@ -15,7 +15,9 @@ export function AdminControls({ type, id, status }: { type: "listing" | "user" |
     }
   }
   if (type === "listing") return <div className="inline-actions">{status === "PENDING_REVIEW" && <><button className="button button-small button-primary" onClick={() => action("approve")}>Goedkeuren</button><button className="button-danger" onClick={() => action("reject")}>Afwijzen</button></>}{status === "PUBLISHED" && <button className="button-danger" onClick={() => action("expire")}>Offline halen</button>}{message}</div>;
-  if (type === "user") return <div className="inline-actions"><select aria-label="Nieuwe gebruikersrol" defaultValue={status} onChange={(e) => action(`role:${e.target.value}`)}><option value="SEEKER">Woningzoeker</option><option value="PROVIDER">Aanbieder</option><option value="ADMIN">Beheerder</option></select>{message}</div>;
+  if (type === "user") return status === "ADMIN"
+    ? <span className="admin-role-locked">Admin</span>
+    : <div className="inline-actions"><select aria-label="Nieuwe gebruikersrol" defaultValue={status} onChange={(e) => action(`role:${e.target.value}`)}><option value="SEEKER">Woningzoeker</option><option value="PROVIDER">Aanbieder</option></select>{message}</div>;
   if (type === "agency") return <div className="inline-actions"><select aria-label="Abonnement wijzigen" onChange={(e) => action(`plan:${e.target.value}`)} defaultValue=""><option value="" disabled>Plan kiezen…</option><option value="BASIC">Basic (gratis)</option><option value="PRO">Pro (gratis)</option><option value="EXPERT_PRO_MAX">Expert Pro Max (gratis)</option></select><button className="button button-small button-outline" onClick={() => action(status === "verified" ? "unverify" : "verify")}>{status === "verified" ? "Verificatie intrekken" : "Verifiëren"}</button>{message}</div>;
   return <div className="inline-actions"><button className="button button-small button-outline" onClick={() => action("resolve")}>Oplossen</button><button className="button-danger" onClick={() => action("dismiss")}>Negeren</button>{message}</div>;
 }

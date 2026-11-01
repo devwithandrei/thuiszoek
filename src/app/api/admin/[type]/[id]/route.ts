@@ -29,11 +29,11 @@ export async function PATCH(request: Request, { params }: Context) {
     await db.report.update({ where: { id }, data: { status, reviewerId: admin.id } });
   } else if (type === "user") {
     const roleValue = action.startsWith("role:") ? action.slice(5) : "";
-    const role = z.enum(["SEEKER", "PROVIDER", "ADMIN"]).safeParse(roleValue);
+    const role = z.enum(["SEEKER", "PROVIDER"]).safeParse(roleValue);
     if (!role.success) return Response.json({ error: "Ongeldige gebruikersrol." }, { status: 400 });
-    if (id === admin.id && role.data !== Role.ADMIN) return Response.json({ error: "Je kunt je eigen beheerdersrol niet intrekken." }, { status: 409 });
-    const target = await db.user.findUnique({ where: { id }, select: { id: true, agency: { select: { id: true } } } });
+    const target = await db.user.findUnique({ where: { id }, select: { id: true, role: true, agency: { select: { id: true } } } });
     if (!target) return Response.json({ error: "Gebruiker niet gevonden." }, { status: 404 });
+    if (target.role === Role.ADMIN) return Response.json({ error: "Beheerdersrechten worden uitsluitend beheerd via SEED_ADMIN_EMAIL." }, { status: 409 });
     if (target.agency && role.data !== Role.PROVIDER) return Response.json({ error: "Deze gebruiker heeft een aanbiedersprofiel. Behoud de aanbiedersrol om toegang tot advertenties en aanvragen niet te verliezen." }, { status: 409 });
     await db.user.update({ where: { id }, data: { role: role.data } });
   } else if (type === "agency") {

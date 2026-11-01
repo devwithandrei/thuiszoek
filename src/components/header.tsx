@@ -108,7 +108,7 @@ export function Header() {
       <div className="header-inner">
         <BrandLogo />
         <nav className={open ? "main-nav nav-open" : "main-nav"} onClick={() => setOpen(false)}>
-          <Link href="/zoeken">Huren</Link><Link href="/zoeken?aanbod=koop">Kopen</Link><Link href="/contact">Contact</Link>
+          <Link href="/zoeken" suppressHydrationWarning>Huren</Link><Link href="/zoeken?aanbod=koop" suppressHydrationWarning>Kopen</Link><Link href="/contact" suppressHydrationWarning>Contact</Link>
         </nav>
         <div className="header-actions">
           <Link className="icon-button search-shortcut" href="/zoeken" aria-label="Zoeken"><Search size={19} /></Link>

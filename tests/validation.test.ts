@@ -52,6 +52,11 @@ describe("public request validation", () => {
       expect(isConfiguredAdminEmail("other@example.com", "verified", "devwithandrei@gmail.com")).toBe(false);
       expect(isConfiguredAdminEmail("devwithandrei@gmail.com", "verified", "")).toBe(false);
     });
+
+    it("allows multiple configured emails separated by commas or newlines", () => {
+      expect(isConfiguredAdminEmail(" SECOND@example.com ", "verified", "first@example.com, second@example.com")).toBe(true);
+      expect(isConfiguredAdminEmail("third@example.com", "verified", "first@example.com,\nsecond@example.com")).toBe(false);
+    });
   });
 
   describe("account onboarding", () => {
