@@ -120,6 +120,19 @@ main{min-width:0}
   .detail-aside h1{font-size:23px}
   .footer-links{gap:12px 16px}
 }
+.footer-inner{display:flex;flex-direction:column;align-items:center;gap:20px;padding:42px 24px 24px;text-align:center}
+.footer-brand-block{display:flex;flex-direction:column;align-items:center;gap:9px}
+.footer-brand-block p{display:flex;width:max-content;max-width:calc(100vw - 36px);align-items:center;gap:7px;margin:0;color:#b7c6bf;font-size:13px;white-space:nowrap}
+.footer-links{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:12px 26px}
+.footer-links a{color:#e0e8e4;font-size:13px;transition:color .18s ease}
+.footer-links a:hover{color:#fff}
+.footer-search-link{display:grid;width:26px;height:26px;place-items:center;border:1px solid #ffffff3b;border-radius:50%}
+.footer-search-link:hover{background:#ffffff14}
+.footer-inner .copyright{grid-column:auto;margin-top:3px;color:#b7c6bf;font-size:12px}
+@media(max-width:680px){
+  .footer-inner{gap:18px;padding:34px 18px 22px}
+  .footer-links{gap:12px 18px}
+}
 .onboarding-wrap{width:min(900px,100%);margin:0 auto}
 .onboarding-intro{max-width:680px;margin-bottom:26px}
 .onboarding-intro .page-title{font-size:clamp(30px,5vw,42px);line-height:1.12}
