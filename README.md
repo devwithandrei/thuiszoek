@@ -5,10 +5,10 @@ Dutch residential and commercial property marketplace MVP built with Next.js App
 ## Included
 
 - Dutch, responsive public pages for search/filtering, listing detail, agency profiles, pricing, contact, privacy, and terms.
-- Clerk sign-in with server-side role lookup in PostgreSQL. Roles are `SEEKER`, `PROVIDER`, and `ADMIN`; a Clerk session by itself never grants provider/admin permissions.
+- Branded ThuisZoek sign-in/sign-up modal using Clerk's custom-flow API for Google OAuth and email verification, with server-side role lookup in PostgreSQL. Roles are `SEEKER`, `PROVIDER`, and `ADMIN`; a Clerk session by itself never grants provider/admin permissions.
 - Post-authentication onboarding for a home seeker (rent/buy preference) or provider (private person/agency). Verified Clerk email is linked to the account, and the complete profile is saved in PostgreSQL before dashboard access.
 - Separate seeker dashboard (`/dashboard`) and provider workspace (`/studio`) with draft creation/editing, signed Cloudinary image uploads, moderation submission, listing status, and enquiries.
-- Admin dashboard for moderation, reports, user roles, agency plans/verification, contact messages, and audit activity.
+- Compact, responsive tabbed admin dashboard for moderation, reports, user roles, agency plans/verification, contact messages, and audit activity; tables become labeled cards on small screens.
 - Basic (1), Pro (10), and Expert Pro Max (unlimited) provider plans. Every plan is free. Billing has no checkout, subscription, or payment integration.
 - Listing expiry after 30 days, authenticated scheduled expiry, report and enquiry forms, Zod validation, PostgreSQL-backed request throttling, sitemap, robots rules, synthetic seed data, and unit tests.
 
@@ -32,7 +32,7 @@ No third-party listings are scraped or copied. Seed advertisements and sample ag
 
 Create the Clerk account for the configured admin email and verify that email. The first signed-in request promotes that exact verified account and creates its database profile; other accounts, unverified emails, and email lookalikes do not receive admin access. Open `/admin` directly or use the dashboard link in the account menu. People can choose seeker or provider during onboarding; provider listings still require admin moderation before publication. Admins can inspect category totals and the saved account type in the admin dashboard. Keep the configured admin email restricted to a trusted mailbox.
 
-Clerk sign-in and sign-up pages are available at `/sign-in` and `/sign-up`. To offer Google authentication, enable Google as a social connection in the Clerk Dashboard and configure the allowed redirect/origin URLs for your local and deployed application.
+The branded authentication modal is available from the header and through `/sign-in` and `/sign-up`. In Clerk, enable email address with email verification codes and Google as a social connection. Configure allowed redirect/origin URLs for local and deployed applications; the Google callback route is `/sso-callback`.
 
 ## Commands
 

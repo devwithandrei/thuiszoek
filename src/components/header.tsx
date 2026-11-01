@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { SignInButton, useAuth, useClerk, useUser } from "@clerk/nextjs";
+import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import { ChevronDown, LayoutDashboard, LogOut, Menu, Search, Settings, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { AuthDialog } from "@/components/auth-dialog";
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { isLoaded, isSignedIn } = useAuth();
   const { user, isLoaded: isUserLoaded } = useUser();
   const { openUserProfile, signOut } = useClerk();
@@ -107,17 +109,18 @@ export function Header() {
         <BrandLogo />
         <nav className={open ? "main-nav nav-open" : "main-nav"} onClick={() => setOpen(false)}>
           <Link href="/zoeken">Huren</Link><Link href="/zoeken?aanbod=koop">Kopen</Link>
-          {isLoaded && !isSignedIn && <div className="mobile-nav-account"><SignInButton mode="modal"><button className="button button-outline">Inloggen</button></SignInButton><Link className="button button-primary" href="/contact">Plaats woning</Link></div>}
+          {isLoaded && !isSignedIn && <div className="mobile-nav-account"><button className="button button-outline" onClick={() => setAuthDialogOpen(true)}>Inloggen</button><Link className="button button-primary" href="/contact">Plaats woning</Link></div>}
         </nav>
         <div className="header-actions">
           <Link className="icon-button search-shortcut" href="/zoeken" aria-label="Zoeken"><Search size={19} /></Link>
           <div className="desktop-auth-actions">
-            {isLoaded && !isSignedIn && <><SignInButton mode="modal"><button className="button button-outline button-small">Inloggen</button></SignInButton><Link className="button button-primary button-small" href="/contact">Plaats woning</Link></>}
+            {isLoaded && !isSignedIn && <><button className="button button-outline button-small" onClick={() => setAuthDialogOpen(true)}>Inloggen</button><Link className="button button-primary button-small" href="/contact">Plaats woning</Link></>}
           </div>
           {accountMenu()}
           <button className="icon-button mobile-menu" onClick={() => setOpen(!open)} aria-label={open ? "Menu sluiten" : "Menu openen"}>{open ? <X /> : <Menu />}</button>
         </div>
       </div>
+      {authDialogOpen && <AuthDialog onClose={() => setAuthDialogOpen(false)} />}
     </header>
   );
 }
