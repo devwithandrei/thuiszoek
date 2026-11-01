@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
-import { ChevronDown, LayoutDashboard, LogOut, Menu, Search, Settings, X } from "lucide-react";
+import { ChevronDown, CircleUserRound, LayoutDashboard, LogOut, Menu, Search, Settings, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { AuthDialog } from "@/components/auth-dialog";
@@ -108,14 +108,11 @@ export function Header() {
       <div className="header-inner">
         <BrandLogo />
         <nav className={open ? "main-nav nav-open" : "main-nav"} onClick={() => setOpen(false)}>
-          <Link href="/zoeken">Huren</Link><Link href="/zoeken?aanbod=koop">Kopen</Link>
-          {isLoaded && !isSignedIn && <div className="mobile-nav-account"><button className="button button-outline" onClick={() => setAuthDialogOpen(true)}>Inloggen</button><Link className="button button-primary" href="/contact">Plaats woning</Link></div>}
+          <Link href="/zoeken">Huren</Link><Link href="/zoeken?aanbod=koop">Kopen</Link><Link href="/contact">Contact</Link>
         </nav>
         <div className="header-actions">
           <Link className="icon-button search-shortcut" href="/zoeken" aria-label="Zoeken"><Search size={19} /></Link>
-          <div className="desktop-auth-actions">
-            {isLoaded && !isSignedIn && <><button className="button button-outline button-small" onClick={() => setAuthDialogOpen(true)}>Inloggen</button><Link className="button button-primary button-small" href="/contact">Plaats woning</Link></>}
-          </div>
+          {isLoaded && !isSignedIn && <button className="icon-button auth-icon-button" type="button" aria-label="Inloggen" title="Inloggen" onClick={() => { setOpen(false); setAuthDialogOpen(true); }}><CircleUserRound size={32} strokeWidth={1.6} aria-hidden="true" /></button>}
           {accountMenu()}
           <button className="icon-button mobile-menu" onClick={() => setOpen(!open)} aria-label={open ? "Menu sluiten" : "Menu openen"}>{open ? <X /> : <Menu />}</button>
         </div>

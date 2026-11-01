@@ -4,7 +4,7 @@ export function BrandLogo({ footer = false }: { footer?: boolean }) {
   const wordmarkColor = footer ? "#ffffff" : "#14543E";
 
   return (
-    <Link className={`brand${footer ? " footer-brand" : ""}`} href="/" aria-label="ThuisZoek home" translate="no">
+    <Link className={`brand${footer ? " footer-brand" : ""}`} href="/" aria-label="ThuisZoek startpagina" translate="no">
       <svg className="brand-logo-svg" width="190" height="40" viewBox="0 0 228 48" role="img" aria-label="ThuisZoek">
         <g fill="none" stroke="#157654" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4.5 21.5 21 7l12.5 11" strokeWidth="3.5" />
