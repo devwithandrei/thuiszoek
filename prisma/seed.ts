@@ -5,14 +5,30 @@ const db = new PrismaClient();
 async function main() {
   const adminClerkId = process.env.SEED_ADMIN_CLERK_ID;
   const adminEmail = process.env.SEED_ADMIN_EMAIL;
-  if (!adminClerkId || !adminEmail) {
-    throw new Error("Set SEED_ADMIN_CLERK_ID and SEED_ADMIN_EMAIL to a real Clerk user before seeding.");
+  if (adminClerkId && adminEmail) {
+    const adminName = process.env.SEED_ADMIN_NAME || "ThuisZoek beheerder";
+    const [userByClerkId, userByEmail] = await Promise.all([
+      db.user.findUnique({ where: { clerkId: adminClerkId } }),
+      db.user.findUnique({ where: { email: adminEmail.toLowerCase() } }),
+    ]);
+    if (userByClerkId && userByEmail && userByClerkId.id !== userByEmail.id) {
+      throw new Error("The configured Clerk ID and admin email belong to different database users. Verify both values before seeding.");
+    }
+    if (userByEmail) {
+      await db.user.update({
+        where: { id: userByEmail.id },
+        data: { clerkId: adminClerkId, email: adminEmail.toLowerCase(), name: adminName, role: "ADMIN" },
+      });
+    } else {
+      await db.user.upsert({
+        where: { clerkId: adminClerkId },
+        create: { clerkId: adminClerkId, email: adminEmail.toLowerCase(), name: adminName, role: "ADMIN" },
+        update: { email: adminEmail.toLowerCase(), name: adminName, role: "ADMIN" },
+      });
+    }
+  } else if (adminEmail) {
+    console.info("No SEED_ADMIN_CLERK_ID set. The admin account will be created on sign-in after Clerk verifies SEED_ADMIN_EMAIL.");
   }
-  await db.user.upsert({
-    where: { clerkId: adminClerkId },
-    create: { clerkId: adminClerkId, email: adminEmail, name: process.env.SEED_ADMIN_NAME || "ThuisZoek beheerder", role: "ADMIN" },
-    update: { email: adminEmail, role: "ADMIN" },
-  });
 
   const provider = await db.user.upsert({
     where: { clerkId: "seed-provider-demo" },

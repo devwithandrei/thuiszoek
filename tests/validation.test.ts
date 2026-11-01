@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { contactInput, enquiryInput, listingInput, reportInput } from "../src/lib/validation";
 import { providerPlans } from "../src/lib/plans";
 import { clientAddress } from "../src/lib/rate-limit";
+import { onboardingInput } from "../src/lib/onboarding";
+import { isConfiguredAdminEmail } from "../src/lib/admin-bootstrap";
 
 const validListing = {
   title: "Ruim appartement met tuin",
@@ -41,6 +43,53 @@ describe("listing validation", () => {
 describe("public request validation", () => {
   it("rejects malformed enquiry email and short message", () => {
     expect(enquiryInput.safeParse({ name: "Jan", email: "not-an-email", message: "hoi" }).success).toBe(false);
+  });
+
+  describe("administrator bootstrap", () => {
+    it("only accepts the configured, verified primary email", () => {
+      expect(isConfiguredAdminEmail("DevWithAndrei@gmail.com", "verified", "devwithandrei@gmail.com")).toBe(true);
+      expect(isConfiguredAdminEmail("devwithandrei@gmail.com", "unverified", "devwithandrei@gmail.com")).toBe(false);
+      expect(isConfiguredAdminEmail("other@example.com", "verified", "devwithandrei@gmail.com")).toBe(false);
+      expect(isConfiguredAdminEmail("devwithandrei@gmail.com", "verified", "")).toBe(false);
+    });
+  });
+
+  describe("account onboarding", () => {
+    it("accepts a seeker with a selected search preference", () => {
+      expect(onboardingInput.safeParse({
+        accountType: "SEEKER",
+        name: "Alex Seeker",
+        searchPreference: "RENT",
+        preferredCity: "Utrecht",
+      }).success).toBe(true);
+    });
+
+    it("accepts an independent private property provider", () => {
+      expect(onboardingInput.safeParse({
+        accountType: "PROVIDER",
+        providerType: "PRIVATE_PERSON",
+        name: "Sam Owner",
+        profileName: "Sam Owner",
+        city: "Leiden",
+        description: "Particuliere eigenaar met een woning beschikbaar voor verhuur.",
+        phone: "+31 6 12345678",
+      }).success).toBe(true);
+    });
+
+    it("requires a complete agency profile before provider access", () => {
+      const agency = {
+        accountType: "PROVIDER",
+        providerType: "AGENCY",
+        name: "Robin Agent",
+        profileName: "Utrecht Makelaars",
+        city: "Utrecht",
+        description: "Een professioneel kantoor met een aanbod van woningen in de regio.",
+        website: "https://example.nl",
+      };
+      expect(onboardingInput.safeParse(agency).success).toBe(true);
+      expect(onboardingInput.safeParse({ ...agency, description: "Kantoor." }).success).toBe(false);
+      expect(onboardingInput.safeParse({ ...agency, providerType: "SOMEONE_ELSE" }).success).toBe(false);
+    });
   });
 
   describe("launch provider plans", () => {

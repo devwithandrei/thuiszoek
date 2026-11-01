@@ -6,7 +6,8 @@ Dutch residential and commercial property marketplace MVP built with Next.js App
 
 - Dutch, responsive public pages for search/filtering, listing detail, agency profiles, pricing, contact, privacy, and terms.
 - Clerk sign-in with server-side role lookup in PostgreSQL. Roles are `SEEKER`, `PROVIDER`, and `ADMIN`; a Clerk session by itself never grants provider/admin permissions.
-- Provider dashboard for agency setup, draft creation/editing, signed Cloudinary image uploads, moderation submission, listing status, and enquiries.
+- Post-authentication onboarding for a home seeker (rent/buy preference) or provider (private person/agency). Verified Clerk email is linked to the account, and the complete profile is saved in PostgreSQL before dashboard access.
+- Separate seeker dashboard (`/dashboard`) and provider workspace (`/studio`) with draft creation/editing, signed Cloudinary image uploads, moderation submission, listing status, and enquiries.
 - Admin dashboard for moderation, reports, user roles, agency plans/verification, contact messages, and audit activity.
 - Basic (1), Pro (10), and Expert Pro Max (unlimited) provider plans. Every plan is free. Billing has no checkout, subscription, or payment integration.
 - Listing expiry after 30 days, authenticated scheduled expiry, report and enquiry forms, Zod validation, PostgreSQL-backed request throttling, sitemap, robots rules, synthetic seed data, and unit tests.
@@ -26,10 +27,12 @@ No third-party listings are scraped or copied. Seed advertisements and sample ag
 2. Copy `.env.example` to `.env.local` and fill in `DATABASE_URL`, Clerk keys, and Cloudinary keys. Use a pooled database URL for `DATABASE_URL` where appropriate and a direct PostgreSQL URL for Prisma migrations in `DIRECT_URL`; for local development, Prisma falls back to `DATABASE_URL` if `DIRECT_URL` is omitted. `BILLING_ENABLED` must remain `false`.
 3. Generate the Prisma client: `npm run db:generate`.
 4. Apply the PostgreSQL migrations: `npm run db:deploy` (or `npm run db:migrate` for local development).
-5. To add optional, fictional demo data and a first administrator, set `SEED_ADMIN_CLERK_ID` to the Clerk user ID of a trusted administrator and set `SEED_ADMIN_EMAIL`; then run `npm run db:seed`. Seeding deliberately fails if these values are absent.
+5. To configure the first administrator, set `SEED_ADMIN_EMAIL` to the trusted administrator's email. On sign-in, the app promotes the account only after Clerk confirms that its primary email is verified and matches this value; no Clerk ID or seed command is required. `SEED_ADMIN_CLERK_ID` is optional and is only needed for manual admin provisioning through `npm run db:seed`.
 6. Start the development server: `npm run dev`.
 
-Create a Clerk user first, then seed with that user's real Clerk ID. Additional provider roles should be granted by an existing administrator in the admin dashboard. Do not seed with a placeholder identity in a live environment.
+Create the Clerk account for the configured admin email and verify that email. The first signed-in request promotes that exact verified account and creates its database profile; other accounts, unverified emails, and email lookalikes do not receive admin access. Open `/admin` directly or use the dashboard link in the account menu. People can choose seeker or provider during onboarding; provider listings still require admin moderation before publication. Admins can inspect category totals and the saved account type in the admin dashboard. Keep the configured admin email restricted to a trusted mailbox.
+
+Clerk sign-in and sign-up pages are available at `/sign-in` and `/sign-up`. To offer Google authentication, enable Google as a social connection in the Clerk Dashboard and configure the allowed redirect/origin URLs for your local and deployed application.
 
 ## Commands
 
@@ -51,12 +54,12 @@ Create a Clerk user first, then seed with that user's real Clerk ID. Additional 
 2. Set the production environment variables in `.env.example`, with `NEXT_PUBLIC_SITE_URL` set to the canonical HTTPS origin and `CRON_SECRET` set to a high-entropy random value. Use a pooled `DATABASE_URL` for application runtime and a direct `DIRECT_URL` for migrations. Keep `BILLING_ENABLED=false`.
 3. Configure the production build command as `npm run db:deploy && npm run build`, or run migrations as a separately authorized release step before deploying. Use a pooled database URL for application traffic where appropriate.
 4. Deploy to Vercel. `vercel.json` schedules a daily expiry job; configure the same `CRON_SECRET` in Vercel so the platform sends `Authorization: Bearer <CRON_SECRET>`.
-5. Create the first admin in Clerk and seed its exact user ID/email against the production database. Prefer a one-time controlled seed/release job; remove the seed credentials afterward.
+5. Set `SEED_ADMIN_EMAIL` in Vercel to the trusted administrator's email. The account is promoted on first sign-in only when Clerk confirms that its primary email is verified and matches; a Clerk ID or seed job is not required. Restrict access to this mailbox and remove or change the allowlist when administrator access should be revoked.
 6. Verify Clerk sign-in, PostgreSQL connectivity, Cloudinary signed upload, provider authorization, email/contact operational handling, cron execution, backups, and monitoring before launch.
 
 ## Security, operations, and launch checklist
 
-- Provider/admin write routes verify Clerk identity and then look up the role in PostgreSQL; the public account setup endpoint can only create/update the caller's own `SEEKER` record.
+- Provider/admin write routes verify Clerk identity and then look up the role in PostgreSQL; account onboarding writes only the signed-in user's selected account category and profile.
 - Provider plans are enforced server-side against active/pending listings. Admin role changes, listing moderation and report decisions are recorded in `AuditLog`.
 - Rate limits use atomic PostgreSQL upserts, so they work across serverless instances. The deployment must set a trustworthy `x-real-ip` header (and the application origin must not be exposed around the trusted proxy); requests without a valid client IP share one conservative bucket. Expired rate-limit buckets are cleaned by the protected daily cron.
 - Expiry runs daily and active public pages filter out expired listings immediately, even before the cron changes their status.

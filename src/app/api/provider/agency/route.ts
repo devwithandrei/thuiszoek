@@ -12,6 +12,7 @@ function slugify(name: string) { return `${name.toLowerCase().normalize("NFD").r
 export async function POST(request: Request) {
   const user = await requireRole("PROVIDER");
   if (!user) return Response.json({ error: "Een goedgekeurd aanbiedersaccount is vereist." }, { status: 403 });
+  if (!user.providerType) return Response.json({ error: "Rond eerst de accountinstelling af." }, { status: 409 });
   if (user.agency) return Response.json({ error: "Je kantoorprofiel bestaat al." }, { status: 409 });
   let body: unknown;
   try { body = await request.json(); } catch { return Response.json({ error: "Ongeldige JSON-invoer." }, { status: 400 }); }

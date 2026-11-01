@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <ClerkProvider><html lang="nl" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <ClerkProvider><html lang="nl" translate="no" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
       <body className="min-h-screen flex flex-col"><Header /><main className="flex-1">{children}</main><Footer /></body>
     </html></ClerkProvider>
   );

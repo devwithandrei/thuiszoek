@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
 function useApiForm(endpoint: string, onSuccess?: () => void, method = "POST") {
   const [message, setMessage] = useState("");
@@ -21,14 +22,78 @@ function useApiForm(endpoint: string, onSuccess?: () => void, method = "POST") {
   return { message, submit };
 }
 
-export function AccountSetup() {
-  const { message, submit } = useApiForm("/api/account");
-  return <form className="form-panel" onSubmit={submit} style={{ maxWidth: 540, marginTop: 24 }}><div className="field"><label>Naam</label><input name="name" required minLength={2} maxLength={100} /></div><p className="notice">We gebruiken het geverifieerde e-mailadres uit je beveiligde Clerk-account. Je account wordt als woningzoeker aangemaakt.</p>{message && <p className="notice">{message}</p>}<button className="button button-primary">Account activeren</button></form>;
+export function OnboardingWizard({ initialName, initialCity = "", initialType = "SEEKER" }: { initialName: string; initialCity?: string; initialType?: "SEEKER" | "PROVIDER" }) {
+  const router = useRouter();
+  const [accountType, setAccountType] = useState<"SEEKER" | "PROVIDER">(initialType);
+  const [providerType, setProviderType] = useState<"PRIVATE_PERSON" | "AGENCY">("PRIVATE_PERSON");
+  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setMessage("");
+    const form = new FormData(event.currentTarget);
+    const payload = Object.fromEntries(form.entries());
+    try {
+      const response = await fetch("/api/account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, accountType, ...(accountType === "PROVIDER" ? { providerType } : {}) }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        setMessage(result.error || "Opslaan is niet gelukt. Controleer je gegevens.");
+        return;
+      }
+      router.replace(result.destination);
+      router.refresh();
+    } catch {
+      setMessage("Opslaan is tijdelijk niet gelukt. Controleer je verbinding en probeer het opnieuw.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return <div className="onboarding-wrap">
+    <div className="onboarding-intro"><span className="eyebrow">Persoonlijke accountinstelling</span><h1 className="page-title">Hoe wil je ThuisZoek gebruiken?</h1><p>Kies wat bij je past. We richten je startpagina en account direct goed in.</p><span className="onboarding-step">Stap 1 van 1 · duurt ongeveer 1 minuut</span></div>
+    <form className="form-panel onboarding-form" onSubmit={submit}>
+      <div className="account-type-grid">
+        <button type="button" className={`account-type-card ${accountType === "SEEKER" ? "selected" : ""}`} onClick={() => setAccountType("SEEKER")} aria-pressed={accountType === "SEEKER"}>
+          <span className="account-type-icon">⌂</span><strong>Ik zoek een woning</strong><span>Ik wil huren of kopen en contact opnemen met aanbieders.</span>
+        </button>
+        <button type="button" className={`account-type-card ${accountType === "PROVIDER" ? "selected" : ""}`} onClick={() => setAccountType("PROVIDER")} aria-pressed={accountType === "PROVIDER"}>
+          <span className="account-type-icon">↗</span><strong>Ik bied vastgoed aan</strong><span>Ik ben particulier of makelaar en wil woningen plaatsen.</span>
+        </button>
+      </div>
+      <div className="onboarding-fields">
+        <div className="field"><label htmlFor="account-name">Jouw naam</label><input id="account-name" name="name" required minLength={2} maxLength={100} defaultValue={initialName} autoComplete="name" /></div>
+        {accountType === "SEEKER" ? <>
+          <div className="field"><label htmlFor="search-preference">Waar ben je naar op zoek?</label><select id="search-preference" name="searchPreference" defaultValue="BOTH"><option value="BOTH">Huren of kopen</option><option value="RENT">Een woning huren</option><option value="BUY">Een woning kopen</option></select></div>
+          <div className="field"><label htmlFor="preferred-city">Voorkeursplaats <span className="field-optional">(optioneel)</span></label><input id="preferred-city" name="preferredCity" maxLength={100} defaultValue={initialCity} placeholder="Bijvoorbeeld Utrecht" autoComplete="address-level2" /></div>
+        </> : <>
+          <fieldset className="provider-kind-fieldset"><legend>Wat voor aanbieder ben je?</legend><div className="provider-kind-options">
+            <label><input type="radio" name="provider-kind" checked={providerType === "PRIVATE_PERSON"} onChange={() => setProviderType("PRIVATE_PERSON")} /> Particulier</label>
+            <label><input type="radio" name="provider-kind" checked={providerType === "AGENCY"} onChange={() => setProviderType("AGENCY")} /> Makelaar / agency</label>
+          </div></fieldset>
+          <div className="field"><label htmlFor="profile-name">{providerType === "AGENCY" ? "Naam van je makelaarskantoor" : "Naam van je aanbiedersprofiel"}</label><input id="profile-name" name="profileName" required minLength={2} maxLength={120} defaultValue={providerType === "PRIVATE_PERSON" ? initialName : ""} placeholder={providerType === "AGENCY" ? "Bijvoorbeeld Makelaardij Utrecht" : initialName} /></div>
+          <div className="field"><label htmlFor="provider-city">Plaats</label><input id="provider-city" name="city" required minLength={2} maxLength={100} defaultValue={initialCity} placeholder="Bijvoorbeeld Utrecht" autoComplete="address-level2" /></div>
+          <div className="field"><label htmlFor="provider-phone">Telefoonnummer <span className="field-optional">(optioneel)</span></label><input id="provider-phone" name="phone" type="tel" maxLength={30} autoComplete="tel" /></div>
+          {providerType === "AGENCY" && <div className="field"><label htmlFor="provider-website">Website <span className="field-optional">(optioneel)</span></label><input id="provider-website" name="website" type="url" maxLength={250} placeholder="https://..." autoComplete="url" /></div>}
+          <div className="field"><label htmlFor="provider-description">{providerType === "AGENCY" ? "Over het kantoor" : "Over jou en je aanbod"}</label><textarea id="provider-description" name="description" rows={4} required minLength={30} maxLength={3000} placeholder="Vertel woningzoekers kort wie je bent en wat je aanbiedt." /></div>
+        </>}
+      </div>
+      <p className="onboarding-privacy">Je geverifieerde e-mailadres wordt veilig uit je Google/Clerk-account overgenomen. Je gegevens worden opgeslagen zodat we je passende omgeving kunnen tonen.</p>
+      {message && <p className="notice" role="alert">{message}</p>}
+      <button className="button button-primary onboarding-submit" disabled={saving}>{saving ? "Account instellen…" : accountType === "SEEKER" ? "Naar mijn woningdashboard" : "Mijn Studio aanmaken"}</button>
+    </form>
+  </div>;
 }
 
-export function AgencySetup({ agency }: { agency?: { name: string; city: string; website: string | null; phone: string | null; description: string } }) {
+export function AgencySetup({ agency, providerType }: { agency?: { name: string; city: string; website: string | null; phone: string | null; description: string }; providerType?: "PRIVATE_PERSON" | "AGENCY" | null }) {
   const { message, submit } = useApiForm("/api/provider/agency", () => agency && window.location.reload(), agency ? "PATCH" : "POST");
-  return <form className="form-panel" onSubmit={submit} style={{ maxWidth: 680 }}><div className="form-grid"><div className="field"><label>Kantoornaam</label><input name="name" required minLength={2} maxLength={120} defaultValue={agency?.name} /></div><div className="field"><label>Plaats</label><input name="city" required minLength={2} maxLength={100} defaultValue={agency?.city} /></div><div className="field"><label>Website</label><input name="website" type="url" placeholder="https://" defaultValue={agency?.website ?? ""} /></div><div className="field"><label>Telefoon</label><input name="phone" maxLength={30} defaultValue={agency?.phone ?? ""} /></div><div className="field full"><label>Over het kantoor</label><textarea name="description" required minLength={30} maxLength={3000} rows={5} defaultValue={agency?.description} /></div></div>{message && <p className="notice">{message}</p>}<button className="button button-primary" style={{ marginTop: 18 }}>{agency ? "Profiel opslaan" : "Kantoorprofiel aanmaken"}</button></form>;
+  const providerLabel = providerType === "PRIVATE_PERSON" ? "aanbiedersprofiel" : "makelaarskantoor";
+  return <form className="form-panel" onSubmit={submit} style={{ maxWidth: 680 }}><div className="form-grid"><div className="field"><label>{providerType === "PRIVATE_PERSON" ? "Profielnaam" : "Kantoornaam"}</label><input name="name" required minLength={2} maxLength={120} defaultValue={agency?.name} /></div><div className="field"><label>Plaats</label><input name="city" required minLength={2} maxLength={100} defaultValue={agency?.city} /></div><div className="field"><label>Website</label><input name="website" type="url" placeholder="https://" defaultValue={agency?.website ?? ""} /></div><div className="field"><label>Telefoon</label><input name="phone" maxLength={30} defaultValue={agency?.phone ?? ""} /></div><div className="field full"><label>Over {providerLabel}</label><textarea name="description" required minLength={30} maxLength={3000} rows={5} defaultValue={agency?.description} /></div></div>{message && <p className="notice">{message}</p>}<button className="button button-primary" style={{ marginTop: 18 }}>{agency ? "Profiel opslaan" : `${providerLabel} aanmaken`}</button></form>;
 }
 
 export function ListingEditor({ listing, listingId }: { listing?: { title: string; description: string; propertyType: string; offerType: string; price: number; city: string; postalCode: string; bedrooms: number; bathrooms: number; areaSqm: number; energyLabel: string | null; images: string[] }; listingId?: string }) {

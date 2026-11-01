@@ -30,6 +30,6 @@ export default async function Home() {
       <div className="benefit"><div className="benefit-icon"><BadgeCheck /></div><h3>Transparant aanbod</h3><p>Actuele woningen van makelaars, met duidelijke informatie en directe contactmogelijkheden.</p></div>
       <div className="benefit"><div className="benefit-icon"><HeartHandshake /></div><h3>Een platform voor iedereen</h3><p>Zoeken is gratis. Makelaars plaatsen hun aanbod bij de start ook kosteloos.</p></div>
     </div></section>
-    <div className="wrap"><section className="cta-band"><div><h2>Breng jouw aanbod onder de aandacht</h2><p>Start gratis en ontmoet jouw volgende huurder of koper.</p></div><Link className="button button-primary" href="/tarieven">Ontdek de mogelijkheden <ArrowRight size={16} /></Link></section></div>
+    <div className="wrap"><section className="cta-band"><div><h2>Breng jouw aanbod onder de aandacht</h2><p>Start gratis en ontmoet jouw volgende huurder of koper.</p></div><Link className="button button-primary" href="/contact">Neem contact op <ArrowRight size={16} /></Link></section></div>
   </>;
 }
