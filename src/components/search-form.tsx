@@ -19,7 +19,7 @@ const propertyTypes = [
 export function SearchForm({
   large = false,
   initialCity = "",
-  initialOffer = "huur",
+  initialOffer = "",
   initialType = "",
   initialBedrooms = "",
 }: {

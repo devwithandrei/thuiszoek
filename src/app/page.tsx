@@ -19,7 +19,6 @@ export default async function Home() {
       <h1>Vind een plek<br />die als thuis voelt.</h1>
       <p>Ontdek woningen en bedrijfspanden door heel Nederland.</p>
       <SearchForm large />
-      <p className="hero-note">Eerlijk aanbod. Rechtstreeks van betrouwbare makelaars.</p>
     </div></section>
     <section className="section"><div className="wrap">
       <div className="section-head"><div><span className="eyebrow">Vers op ThuisZoek</span><h2>Woningen om bij weg te dromen</h2><p>Nieuw aanbod, zorgvuldig samengesteld.</p></div><Link className="text-link" href="/zoeken">Bekijk alle woningen <ArrowRight size={15} /></Link></div>
