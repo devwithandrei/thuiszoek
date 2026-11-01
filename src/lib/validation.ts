@@ -3,7 +3,7 @@ import { z } from "zod";
 export const listingInput = z.object({
   title: z.string().trim().min(8).max(120),
   description: z.string().trim().min(40).max(8000),
-  propertyType: z.enum(["APARTMENT", "HOUSE", "STUDIO", "ROOM", "COMMERCIAL", "OFFICE", "RETAIL"]),
+  propertyType: z.enum(["APARTMENT", "HOUSE", "STUDIO", "ROOM", "COMMERCIAL", "OFFICE", "RETAIL", "GARAGE"]),
   offerType: z.enum(["RENT", "BUY"]),
   price: z.number().int().positive().max(100_000_000),
   city: z.string().trim().min(2).max(100),

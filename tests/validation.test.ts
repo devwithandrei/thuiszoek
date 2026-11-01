@@ -38,6 +38,10 @@ describe("listing validation", () => {
     expect(listingInput.safeParse({ ...validListing, postalCode: "3511 AB" }).success).toBe(true);
     expect(listingInput.safeParse({ ...validListing, postalCode: "0000 ZZ" }).success).toBe(false);
   });
+
+  it("accepts garages as a property type", () => {
+    expect(listingInput.safeParse({ ...validListing, propertyType: "GARAGE" }).success).toBe(true);
+  });
 });
 
 describe("public request validation", () => {

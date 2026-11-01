@@ -49,6 +49,7 @@ enum PropertyType {
   COMMERCIAL
   OFFICE
   RETAIL
+  GARAGE
 }
 
 enum OfferType {
